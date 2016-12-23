@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util" 
+       xmlns:leopard="http://leopard.le.com/schema/leopard"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.2.xsd http://leopard.le.com/schema/leopard http://leopard.le.com/schema/leopard.xsd"
+       default-lazy-init="false" default-autowire="byName">
+    
+    <!-- 注册中心 -->
+	<!--<ledo:registry id="ledoRegistry" protocol="ledoRegistry" index="index.ledo.le.com" />-->
+
+	<leopard:server id="ledoServer" protocol="ledo" port="21600" />
+	<bean id="demoServiceImpl" class="com.letv.netty.rpc.test.CalculateImpl" ></bean>
+	<leopard:provider id="demoService" interface="com.letv.netty.rpc.test.Calculate"
+ ref="demoServiceImpl"  server="ledoServer" alias="ledo-demo1" concurrents="1">
+ 	</leopard:provider>
+ 	
+</beans>
