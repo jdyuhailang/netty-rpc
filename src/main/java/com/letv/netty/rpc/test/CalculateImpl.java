@@ -12,4 +12,10 @@ public class CalculateImpl implements Calculate {
     public int add(int a, int b) {
         return a + b;
     }
+
+    public String sayHello(String param) {
+        StringBuffer sb = new StringBuffer(param);
+        sb.append("append a string" );
+        return sb.toString();
+    }
 }

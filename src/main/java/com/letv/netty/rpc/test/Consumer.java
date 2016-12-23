@@ -21,6 +21,7 @@ public class Consumer {
         Calculate service = (Calculate) context.getBean("demoService");
         int result = service.add(2,3);
         logger.info("result {} ",result);
+        logger.info(service.sayHello("hello "));
         //TimeUnit.MILLISECONDS.sleep(100);
         /*result = service.add(1,1);
         logger.info("result {} ",result);

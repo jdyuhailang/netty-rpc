@@ -9,4 +9,6 @@ package com.letv.netty.rpc.test;
  */
 public interface Calculate {
     int add(int a, int b);
+
+    String sayHello(String param);
 }
