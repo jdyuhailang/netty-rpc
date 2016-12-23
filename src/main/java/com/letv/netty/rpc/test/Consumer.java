@@ -19,7 +19,7 @@ public class Consumer {
     public static void main(String[] args) throws  Exception{
         ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[] { "applicationConsumer.xml" });
         Calculate service = (Calculate) context.getBean("demoService");
-        int result = service.add(1,1);
+        int result = service.add(2,3);
         logger.info("result {} ",result);
         //TimeUnit.MILLISECONDS.sleep(100);
         /*result = service.add(1,1);

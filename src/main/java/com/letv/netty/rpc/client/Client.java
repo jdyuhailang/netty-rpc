@@ -1,6 +1,7 @@
 package com.letv.netty.rpc.client;
 
 import com.letv.netty.rpc.core.LedoContext;
+import com.letv.netty.rpc.core.error.InitErrorException;
 import com.letv.netty.rpc.message.*;
 import com.letv.netty.rpc.serialization.*;
 import com.letv.netty.rpc.spring.ConsumerConfig;
@@ -19,10 +20,8 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created with IntelliJ IDEA.
@@ -48,6 +47,11 @@ public abstract  class Client {
     protected volatile boolean destroyed = false;
     private final Codec codec;
     protected Channel channel;
+    private final ConcurrentHashMap<Integer, MsgFuture> futureMap = new ConcurrentHashMap<Integer, MsgFuture>();
+    /**
+     * 请求id计数器（一个Transport一个）
+     */
+    private final AtomicInteger requestId = new AtomicInteger();
     public Client(ConsumerConfig<?> consumerConfig) {
         this.consumerConfig = consumerConfig;
         this.codec = CodecFactory.getInstance(CodecType.hessian);
@@ -125,7 +129,14 @@ public abstract  class Client {
     }
     private void initTransport(ClientTransportConfig config){
         //logger.info("channel is register {}" ,this.channel.isRegistered());
-        this.channel = buildChannel(config);
+        //ClientTransport clientTransport = null;
+        try {
+            this.channel = buildChannel(config);
+            //clientTransport = new LedoClientTransport(channel).setClientTransportConfig(config);
+        }catch (InitErrorException e) {
+            logger.debug(e.getMessage(), e);
+        }
+
 
     }
     public static Channel buildChannel(ClientTransportConfig transportConfig){
@@ -210,14 +221,20 @@ public abstract  class Client {
         } finally {
         }
     }
+    private int genarateRequestId() {
+
+        return requestId.getAndIncrement();
+    }
     public MsgFuture doSendMsg(RequestMessage msg) {
+        Integer msgId = null;
         Invocation invocation = msg.getInvocationBody();
         String methodName = invocation.getMethodName();
         logger.info("channel is open {}, active {}" ,this.channel.isActive(),this.channel.isOpen());
 
-
+        msgId = genarateRequestId();
+        msg.setRequestId(msgId);
         final MsgFuture resultFuture = new DefaultMsgFuture(this.channel, msg.getMsgHeader(), 5000);
-
+        this.addFuture(msg,resultFuture);
         ByteBuf byteBuf = PooledBufHolder.getBuffer();
         Protocol protocol = ProtocolFactory.getProtocol(msg.getProtocolType(), msg.getMsgHeader().getCodecType());
         byteBuf = protocol.encode(msg, byteBuf);
@@ -231,7 +248,20 @@ public abstract  class Client {
         resultFuture.setSentTime(LedoContext.systemClock.now());// 置为已发送
         return resultFuture;
     }
+    protected void addFuture(BaseMessage msg, MsgFuture msgFuture) {
+        int msgType = msg.getMsgHeader().getMsgType();
+        Integer msgId = msg.getMsgHeader().getMsgId();
+        if (msgType == Constants.REQUEST_MSG
+                || msgType == Constants.CALLBACK_REQUEST_MSG
+                || msgType == Constants.HEARTBEAT_REQUEST_MSG) {
+            this.futureMap.put(msgId, msgFuture);
 
+        } else {
+            logger.error("cannot handle Future for this Msg:{}", msg);
+        }
+
+
+    }
     public void destroy() {
         if (destroyed) {
             return;
@@ -274,6 +304,29 @@ public abstract  class Client {
                     }
                 });
             }
+        }
+    }
+
+    public Channel getChannel() {
+        return channel;
+    }
+
+    public void receiveResponse(ResponseMessage msg) {
+        if (logger.isTraceEnabled()) {
+            logger.trace("receiveResponse..{}", msg);
+        }
+        Integer msgId = msg.getRequestId();
+        MsgFuture future = futureMap.get(msgId);
+        if (future == null) {
+            logger.warn("[Ledo-22109]Not found future which msgId is {} when receive response. May be " +
+                    "this future have been removed because of timeout", msgId);
+            if( msg != null && msg.getMsgBody() != null ){
+                msg.getMsgBody().release();
+            }
+            //throw new RpcException("No such Future maybe have been removed for Timeout..");
+        } else {
+            future.setSuccess(msg);
+            futureMap.remove(msgId);
         }
     }
 }

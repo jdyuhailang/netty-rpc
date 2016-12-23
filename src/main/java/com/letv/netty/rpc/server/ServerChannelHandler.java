@@ -1,12 +1,15 @@
 package com.letv.netty.rpc.server;
 
 import com.letv.netty.rpc.message.RequestMessage;
+import com.letv.netty.rpc.utils.NetUtils;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 /**
  * Created with IntelliJ IDEA.
@@ -57,12 +60,12 @@ public class ServerChannelHandler  extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        /*if (this == ctx.pipeline().last()) {
-            logger.warn(
-                    "EXCEPTION, please implement " + getClass().getName() +
-                            ".exceptionCaught() for proper handling.", cause.getCause());
-        }*/
-        logger.info("server channel is exception {} " ,cause);
+        Channel channel = ctx.channel();
+        if (cause instanceof IOException) {
+            logger.warn("catch IOException at {} : {}",
+                    NetUtils.channelToString(channel.remoteAddress(), channel.localAddress()),
+                    cause.getMessage());
+        }
 
     }
 }

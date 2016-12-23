@@ -3,6 +3,8 @@ package com.letv.netty.rpc.message;
 import com.letv.netty.rpc.core.LedoContext;
 import com.letv.netty.rpc.core.error.ClientTimeoutException;
 import com.letv.netty.rpc.core.error.RpcException;
+import com.letv.netty.rpc.serialization.Protocol;
+import com.letv.netty.rpc.serialization.ProtocolFactory;
 import com.letv.netty.rpc.utils.Constants;
 import com.letv.netty.rpc.utils.DateUtils;
 import com.letv.netty.rpc.utils.NetUtils;
@@ -177,11 +179,8 @@ public class DefaultMsgFuture<V> implements MsgFuture<V> {
         if (result instanceof ResponseMessage) { // 服务端返回
             ResponseMessage tmp = (ResponseMessage) result;
             if (tmp.getMsgBody() != null) {
-                /*Protocol protocol = ProtocolFactory.getProtocol(tmp.getProtocolType(), tmp.getMsgHeader().getCodecType());
+                Protocol protocol = ProtocolFactory.getProtocol(tmp.getProtocolType(), tmp.getMsgHeader().getCodecType());
                 try {
-                    if (providerLedoVersion != null) { // 供序列化时特殊判断
-                        RpcContext.getContext().setAttachment(Constants.HIDDEN_KEY_DST_LEDO_VERSION, providerLedoVersion);
-                    }
                     // TODO 是否追加对方语言 c++？
                     ResponseMessage ins = (ResponseMessage) protocol.decode(tmp.getMsgBody(), ResponseMessage.class.getCanonicalName());
                     if (ins.getResponse() != null) {
@@ -189,13 +188,12 @@ public class DefaultMsgFuture<V> implements MsgFuture<V> {
                     } else if (ins.getException() != null) tmp.setException(ins.getException());
                 } finally {
                     if (providerLedoVersion != null) { // 供序列化时特殊判断
-                        RpcContext.getContext().removeAttachment(Constants.HIDDEN_KEY_DST_LEDO_VERSION);
                     }
                     if (tmp.getMsgBody() != null) {
                         tmp.getMsgBody().release();
                     }
                     tmp.setMsgBody(null); // 防止多次调用get方法触发反序列化异常
-                }*/
+                }
             }
         } else if (result instanceof CauseHolder) { // 本地异常
             Throwable e = ((CauseHolder) result).cause;

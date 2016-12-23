@@ -24,7 +24,7 @@ import java.io.IOException;
  */
 public class ClientChannelHandler extends ChannelInboundHandlerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(ClientChannelHandler.class);
-
+    private Client client;
     public ClientChannelHandler(){
 
     }
@@ -50,7 +50,7 @@ public class ClientChannelHandler extends ChannelInboundHandlerAdapter {
                     //TODO:set HandShake status here
                      //this.clientTransport.setShakeHandStatus();
                 }
-                //clientTransport.receiveResponse(responseMessage);
+                client.receiveResponse(responseMessage);
 
             } else if (msg instanceof RequestMessage) {
                 RequestMessage request = (RequestMessage) msg;
@@ -95,5 +95,9 @@ public class ClientChannelHandler extends ChannelInboundHandlerAdapter {
     public void exceptionCaught(ChannelHandlerContext ctx, final Throwable cause) throws Exception {
         Channel channel = ctx.channel();
         logger.info("exceptionCaught");
+    }
+
+    public void setClient(Client client) {
+        this.client = client;
     }
 }

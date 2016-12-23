@@ -27,7 +27,6 @@ public class ClientChannelInitializer extends ChannelInitializer<SocketChannel> 
 
     private ClientTransportConfig transportConfig;
 
-
     public ClientChannelInitializer(ClientTransportConfig transportConfig) {
         this.transportConfig = transportConfig;
         this.clientChannelHandler = new ClientChannelHandler();
@@ -49,7 +48,7 @@ public class ClientChannelInitializer extends ChannelInitializer<SocketChannel> 
             default:
                 throw new InitErrorException("Unsupported client protocol type : " + type.name());
         }
-        pipeline.addLast(clientChannelHandler);
+        pipeline.addLast(Constants.CLIENT_CHANNELHANDLE_NAME,clientChannelHandler);
     }
 
     public ClientChannelHandler getClientChannelHandler() {

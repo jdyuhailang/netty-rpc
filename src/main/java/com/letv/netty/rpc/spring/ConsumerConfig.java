@@ -1,6 +1,7 @@
 package com.letv.netty.rpc.spring;
 
 import com.letv.netty.rpc.client.Client;
+import com.letv.netty.rpc.client.ClientChannelHandler;
 import com.letv.netty.rpc.client.FailoverClient;
 import com.letv.netty.rpc.core.LedoContext;
 import com.letv.netty.rpc.server.ClientProxyInvoker;
@@ -342,6 +343,8 @@ public class ConsumerConfig<T> implements Serializable {
         }
         try {
             client = new FailoverClient(this);
+            ClientChannelHandler clientChannelHandler = (ClientChannelHandler)client.getChannel().pipeline().get(com.letv.netty.rpc.utils.Constants.CLIENT_CHANNELHANDLE_NAME);
+            clientChannelHandler.setClient(client);
             proxyInvoker = new ClientProxyInvoker(this);
             proxyIns = (T) ProxyFactory.buildProxy(getProxy(), getProxyClass(),proxyInvoker);
         }catch (Exception e) {
